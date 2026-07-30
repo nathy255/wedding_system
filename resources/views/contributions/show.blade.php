@@ -1,167 +1,133 @@
 @extends('layouts.app')
-@section('title', 'Contribution Details')
-@section('heading', 'Contribution Details')
-@section('subheading', 'Detailed record of ' . $contribution->contributor_name . '\'s contribution')
+@section('title', 'Payment Receipt')
 
-@section('topbar_actions')
-  <a href="{{ route('contributions.index') }}" class="btn btn-outline">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to List
-  </a>
+@section('extra_css')
+<style>
+.page-header { margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; }
+.ph-left { display: flex; align-items: center; gap: 16px; }
+.btn-back { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s; }
+.btn-back:hover { background: var(--bg-card-hover); color: #fff; }
+.ph-title { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+
+.btn-primary { background: linear-gradient(90deg, #10B981, #059669); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25); transition: transform 0.2s; width: fit-content; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+
+.receipt-wrapper { max-width: 500px; margin: 0 auto; }
+.receipt-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px; box-shadow: 0 24px 64px rgba(0,0,0,0.4); text-align: center; position: relative; overflow: hidden; }
+.rc-header { margin-bottom: 32px; }
+.rc-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px; }
+.rc-title { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 8px; }
+.rc-amount { font-size: 48px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+
+.rc-divider { height: 1px; background: dashed 1px var(--border); margin: 32px 0; }
+
+.rc-details { text-align: left; display: flex; flex-direction: column; gap: 16px; }
+.rc-row { display: flex; justify-content: space-between; align-items: center; }
+.rc-label { font-size: 13px; color: var(--text-muted); }
+.rc-val { font-size: 14px; font-weight: 600; color: #fff; }
+
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-confirmed { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.badge-pending { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+
+.print-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+.btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+/* Decorative top gradient */
+.receipt-card::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px;
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+
+/* ─── Mobile Responsive ─── */
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .ph-title { font-size: 20px; }
+  .receipt-card { padding: 24px 16px; border-radius: 16px; }
+  .rc-amount { font-size: 36px; }
+  .rc-icon { width: 52px; height: 52px; font-size: 20px; }
+}
+
+@media (max-width: 480px) {
+  .ph-title { font-size: 18px; }
+  .btn-primary { padding: 10px 16px; font-size: 12px; }
+  .receipt-card { padding: 20px 14px; }
+  .rc-amount { font-size: 28px; }
+  .print-actions { flex-direction: column; }
+  .btn-outline { text-align: center; }
+}
+</style>
 @endsection
 
 @section('content')
-<div style="display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start;">
-  
-  {{-- Main Details Card --}}
-  <div class="form-card">
-    <div class="form-card-header" style="display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div class="form-card-title">General Information</div>
-        <div class="form-card-sub">Recorded on {{ $contribution->created_at->format('M d, Y at H:i') }}</div>
-      </div>
-      <span class="badge badge-{{ $contribution->status }}" style="padding:6px 14px;font-size:13px;">
-        {{ ucfirst($contribution->status) }}
-      </span>
-    </div>
-    
-    <div class="form-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
-        
-        <div>
-          <label style="font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px;">Contributor</label>
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:var(--gold-pale);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;font-family:'Cormorant Garamond',serif;font-weight:600;">
-              {{ strtoupper(substr($contribution->contributor_name, 0, 1)) }}
-            </div>
-            <div>
-              <div style="font-size:16px;font-weight:600;color:var(--ink);">{{ $contribution->contributor_name }}</div>
-              <div style="font-size:13px;color:var(--ink-muted);">{{ $contribution->contributor_phone }}</div>
-            </div>
-          </div>
-        </div>
 
-        <div>
-          <label style="font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px;">Type & Method</label>
-          <div style="font-size:15px;font-weight:500;color:var(--ink);">
-            {{ ucfirst($contribution->type) }}
-            @if($contribution->payment_method)
-              <span style="color:var(--ink-faint);font-weight:400;"> via </span> 
-              {{ ucwords(str_replace('_',' ',$contribution->payment_method)) }}
-            @endif
-          </div>
-          @if($contribution->payment_reference)
-            <div style="font-size:12px;color:var(--rose);margin-top:4px;font-family:monospace;">Ref: {{ $contribution->payment_reference }}</div>
-          @endif
-        </div>
-
-        <div style="grid-column: span 2; padding:24px; background:var(--ivory); border-radius:12px; border:1px dashed var(--border); display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <label style="font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Amount Contributed</label>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--rose);">
-              TZS {{ number_format($contribution->amount) }}
-            </div>
-          </div>
-          <div style="text-align:right;">
-             <label style="font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Recorded By</label>
-             <div style="font-size:14px;font-weight:500;color:var(--ink);">{{ $contribution->recordedBy?->full_name ?? 'System' }}</div>
-          </div>
-        </div>
-
-        @if($contribution->notes)
-        <div style="grid-column: span 2;">
-          <label style="font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px;">Notes / Description</label>
-          <div style="font-size:14px;color:var(--ink-muted);line-height:1.6;background:var(--surface);padding:16px;border:1px solid var(--border);border-radius:10px;">
-            {{ $contribution->notes }}
-          </div>
-        </div>
-        @endif
-
-      </div>
-    </div>
-
-    <div class="form-actions" style="justify-content: space-between;">
-      <div>
-        @if($contribution->status === 'pending')
-          <form method="POST" action="{{ route('contributions.confirm', $contribution) }}" style="display:inline;">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-green">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              Confirm Contribution
-            </button>
-          </form>
-          <form method="POST" action="{{ route('contributions.reject', $contribution) }}" style="display:inline;">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-outline" style="color:#C62828; border-color:rgba(198,40,40,0.2);" onclick="return confirm('Reject this entry?')">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Reject
-            </button>
-          </form>
-        @endif
-      </div>
-      <div style="display:flex;gap:12px;">
-        <a href="{{ route('contributions.edit', $contribution) }}" class="btn btn-outline">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Edit Entry
-        </a>
-        <a href="{{ route('contributions.receipt', $contribution) }}" target="_blank" class="btn btn-primary">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Print Receipt
-        </a>
-      </div>
-    </div>
+<div class="page-header">
+  <div class="ph-left">
+    <a href="{{ route('contributions.index') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i></a>
+    <h1 class="ph-title">Transaction Receipt</h1>
   </div>
-
-  {{-- Sidebar Info --}}
-  <div style="display:flex;flex-direction:column;gap:24px;">
-    
-    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:24px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:16px;">Confirmation Status</div>
-      
-      @if($contribution->status === 'confirmed')
-        <div style="display:flex;gap:12px;margin-bottom:20px;">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--green-pale);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--ink);">Verified & Confirmed</div>
-            <div style="font-size:12px;color:var(--ink-faint);margin-top:2px;">On {{ $contribution->confirmed_at->format('M d, Y H:i') }} by {{ $contribution->confirmedBy?->full_name }}</div>
-          </div>
-        </div>
-      @else
-        <div style="display:flex;gap:12px;margin-bottom:20px;">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--amber-pale);color:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--ink);">Awaiting Confirmation</div>
-            <div style="font-size:12px;color:var(--ink-faint);margin-top:2px;">This entry has not been verified yet.</div>
-          </div>
-        </div>
-      @endif
-
-      <div style="padding:16px;background:var(--ivory);border-radius:10px;font-size:12px;color:var(--ink-muted);line-height:1.5;">
-        <strong style="color:var(--rose);">Note:</strong> Confirmed contributions are automatically added to the event's total balance and are visible in reports.
-      </div>
-    </div>
-
-    <div style="background:linear-gradient(135deg, var(--ink) 0%, #2A1A17 100%);border-radius:16px;padding:24px;color:#fff;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:var(--rose);opacity:0.1;filter:blur(40px);border-radius:50%;"></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:12px;color:var(--gold-light);">Event Context</div>
-      <div style="font-size:15px;font-weight:500;margin-bottom:4px;">{{ $contribution->event->couple_name }}</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);">{{ $contribution->event->wedding_date->format('F d, Y') }}</div>
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);">
-         <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:6px;">
-            <span>Budget Progress</span>
-            <span>{{ $contribution->event->progress_percent }}%</span>
-         </div>
-         <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
-            <div style="height:100%;width:{{ $contribution->event->progress_percent }}%;background:var(--gold-light);border-radius:3px;"></div>
-         </div>
-      </div>
-    </div>
-
-  </div>
-
+  <a href="{{ route('contributions.edit', $contribution) }}" class="btn-primary" style="background: linear-gradient(90deg, #A855F7, #D946EF); box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);">
+    <i class="fa-solid fa-pen"></i> Edit Record
+  </a>
 </div>
+
+<div class="receipt-wrapper">
+  <div class="receipt-card">
+    <div class="rc-header">
+      <div class="rc-icon">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div class="rc-title">Payment Successful</div>
+      <div class="rc-amount">${{ number_format($contribution->amount, 2) }}</div>
+      
+      <div style="margin-top: 16px;">
+        <span class="status-badge {{ $contribution->status == 'confirmed' ? 'badge-confirmed' : 'badge-pending' }}">
+          {{ $contribution->status }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="rc-divider"></div>
+    
+    <div class="rc-details">
+      <div class="rc-row">
+        <span class="rc-label">Date & Time</span>
+        <span class="rc-val">{{ $contribution->created_at->format('M d, Y • h:i A') }}</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-label">Transaction ID</span>
+        <span class="rc-val" style="font-family: monospace; color: var(--brand-magenta);">#TXN-{{ str_pad($contribution->id, 6, '0', STR_PAD_LEFT) }}</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-label">Paid By</span>
+        <span class="rc-val">{{ $contribution->contributor_name ?? 'Anonymous' }}</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-label">Event / Workspace</span>
+        <span class="rc-val">{{ $contribution->event?->name ?? 'General Allocation' }}</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-label">Payment Method</span>
+        <span class="rc-val" style="display:flex; align-items:center; gap:6px;">
+          @if(strtolower($contribution->payment_method) == 'mpesa')
+            <i class="fa-solid fa-mobile-screen" style="color:#10B981;"></i> M-Pesa
+          @else
+            <i class="fa-solid fa-credit-card" style="color:#3B82F6;"></i> {{ ucfirst($contribution->payment_method) }}
+          @endif
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="print-actions">
+    <button onclick="window.print()" class="btn-outline">
+      <i class="fa-solid fa-print"></i> Print Receipt
+    </button>
+    <a href="{{ route('contributions.receipt', $contribution) }}" class="btn-primary">
+      <i class="fa-solid fa-download"></i> Download PDF
+    </a>
+  </div>
+</div>
+
 @endsection

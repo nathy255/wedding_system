@@ -1,85 +1,132 @@
 @extends('layouts.app')
 @section('title', 'Edit Gift')
-@section('heading', 'Edit Gift')
-@section('subheading', 'Update record for ' . $gift->item_name)
 
-@section('topbar_actions')
-  <a href="{{ route('gifts.show', $gift) }}" class="btn btn-outline">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to Details
-  </a>
+@section('extra_css')
+<style>
+.page-header { margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+.btn-back { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s; }
+.btn-back:hover { background: var(--bg-card-hover); color: #fff; }
+.ph-title { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+
+.form-wrapper { max-width: 800px; }
+.form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+.fc-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.fc-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.fg-full { grid-column: span 2; }
+
+label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.form-input, .form-select, .form-textarea {
+  background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 13px; font-family: 'Inter', sans-serif; transition: all 0.2s; outline: none; width: 100%;
+}
+.form-textarea { resize: vertical; min-height: 100px; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--brand-magenta); box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1); }
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text-faint); }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+.btn-cancel { padding: 12px 24px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+.btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.btn-submit { padding: 12px 32px; border-radius: 8px; background: linear-gradient(90deg, #F43F5E, #E11D48); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25); transition: transform 0.2s; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244, 63, 94, 0.35); }
+.error-msg { font-size: 11px; color: #EF4444; margin-top: 4px; }
+
+/* ─── Mobile Responsive ─── */
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
+  .ph-title { font-size: 20px; }
+  .form-grid { grid-template-columns: 1fr; gap: 16px; }
+  .fg-full { grid-column: span 1; }
+  .form-card { padding: 20px; }
+}
+</style>
 @endsection
 
 @section('content')
-<div class="form-card" style="max-width: 800px; margin: 0 auto;">
+
+<div class="page-header">
+  <a href="{{ route('gifts.index') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i></a>
+  <h1 class="ph-title">Edit Gift Status</h1>
+</div>
+
+<div class="form-wrapper">
   <form method="POST" action="{{ route('gifts.update', $gift) }}">
     @csrf
     @method('PUT')
-
-    <div class="form-card-header">
-      <div class="form-card-title">Edit Gift Registration</div>
-      <div class="form-card-sub">Modify the information about the gift and the donor</div>
-    </div>
-
-    <div class="form-body">
+    
+    <div class="form-card">
+      <div class="fc-title">Gift Information</div>
+      <div class="fc-sub">Update the details or status of this gift.</div>
+      
       <div class="form-grid">
-        
-        <div class="field span2">
-          <label>Gift Item Name</label>
-          <input type="text" name="item_name" value="{{ old('item_name', $gift->item_name) }}" placeholder="e.g. Samsung 43\" Smart TV..." required/>
-          @error('item_name')<span class="error-msg">{{ $message }}</span>@enderror
-        </div>
-
-        <div class="field">
-          <label>Donor Name</label>
-          <input type="text" name="donor_name" value="{{ old('donor_name', $gift->donor_name) }}" placeholder="Full name" required/>
-          @error('donor_name')<span class="error-msg">{{ $message }}</span>@enderror
-        </div>
-
-        <div class="field">
-          <label>Donor Phone</label>
-          <input type="tel" name="donor_phone" value="{{ old('donor_phone', $gift->donor_phone) }}" placeholder="+255 7XX XXX XXX" required/>
-          @error('donor_phone')<span class="error-msg">{{ $message }}</span>@enderror
-        </div>
-
-        <div class="field">
-          <label>Category</label>
-          <select name="category" required>
-            @foreach(['electronics'=>'Electronics', 'kitchenware'=>'Kitchenware', 'furniture'=>'Furniture', 'clothing'=>'Clothing', 'cash_equivalent'=>'Cash Equivalent', 'other'=>'Other'] as $val => $lbl)
-              <option value="{{ $val }}" {{ old('category', $gift->category) === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-            @endforeach
+        <div class="form-group">
+          <label>Event</label>
+          <select name="event_id" class="form-select" disabled>
+            <option value="{{ $gift->event_id }}">{{ $gift->event?->name ?? 'General' }}</option>
           </select>
         </div>
 
-        <div class="field">
-          <label>Estimated Value (TZS)</label>
-          <input type="number" name="estimated_value" value="{{ old('estimated_value', $gift->estimated_value) }}" placeholder="0"/>
+        <div class="form-group">
+          <label>Gifter/Donor Name</label>
+          <input type="text" name="donor_name" class="form-input" value="{{ old('donor_name', $gift->donor_name) }}" required>
+          @error('donor_name')<span class="error-msg">{{ $message }}</span>@enderror
         </div>
 
-        <div class="field span2">
+        <div class="form-group">
+          <label>Gifter/Donor Phone</label>
+          <input type="text" name="donor_phone" class="form-input" value="{{ old('donor_phone', $gift->donor_phone) }}" required>
+          @error('donor_phone')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
+          <label>Item Name</label>
+          <input type="text" name="item_name" class="form-input" value="{{ old('item_name', $gift->item_name) }}" required>
+          @error('item_name')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
+          <label>Category</label>
+          <select name="category" class="form-select" required>
+            <option value="other" {{ old('category', $gift->category) == 'other' ? 'selected' : '' }}>Other</option>
+            <option value="kitchen_dining" {{ old('category', $gift->category) == 'kitchen_dining' ? 'selected' : '' }}>Kitchen & Dining</option>
+            <option value="bedroom_linen" {{ old('category', $gift->category) == 'bedroom_linen' ? 'selected' : '' }}>Bedroom & Linen</option>
+            <option value="electronics" {{ old('category', $gift->category) == 'electronics' ? 'selected' : '' }}>Electronics</option>
+            <option value="furniture" {{ old('category', $gift->category) == 'furniture' ? 'selected' : '' }}>Furniture</option>
+            <option value="clothing" {{ old('category', $gift->category) == 'clothing' ? 'selected' : '' }}>Clothing</option>
+          </select>
+          @error('category')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
+          <label>Estimated Value</label>
+          <input type="number" step="0.01" name="estimated_value" class="form-input" value="{{ old('estimated_value', $gift->estimated_value) }}">
+          @error('estimated_value')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group fg-full">
+          <label>Description/Notes (Optional)</label>
+          <textarea name="description" class="form-textarea">{{ old('description', $gift->description) }}</textarea>
+          @error('description')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
           <label>Status</label>
-          <div style="display:flex;gap:12px;">
-            @foreach(['pledged' => '⏳ Pledged', 'received' => '📦 Received', 'cancelled' => '✕ Cancelled'] as $val => $lbl)
-              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:14px;font-weight:500; {{ old('status', $gift->status) === $val ? 'border-color:var(--rose); background:var(--rose-pale); color:var(--rose);' : '' }}">
-                <input type="radio" name="status" value="{{ $val }}" {{ old('status', $gift->status) === $val ? 'checked' : '' }} style="accent-color:var(--rose);"/>
-                {{ $lbl }}
-              </label>
-            @endforeach
-          </div>
+          <select name="status" class="form-select" required>
+            <option value="pledged" {{ old('status', $gift->status) == 'pledged' ? 'selected' : '' }}>Pledged</option>
+            <option value="received" {{ old('status', $gift->status) == 'received' ? 'selected' : '' }}>Received</option>
+            <option value="cancelled" {{ old('status', $gift->status) == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+          </select>
+          @error('status')<span class="error-msg">{{ $message }}</span>@enderror
         </div>
-
-        <div class="field span2">
-          <label>Description / Notes</label>
-          <textarea name="description" placeholder="Brand, model, or any special notes...">{{ old('description', $gift->description) }}</textarea>
-        </div>
-
       </div>
     </div>
 
     <div class="form-actions">
-      <a href="{{ route('gifts.show', $gift) }}" class="btn btn-outline">Cancel</a>
-      <button type="submit" class="btn btn-primary">Update Gift Record</button>
+      <a href="{{ route('gifts.index') }}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Save Changes</button>
     </div>
   </form>
 </div>
+
 @endsection

@@ -10,13 +10,12 @@ class Event extends Model
     use HasFactory;
 
     protected $fillable = [
-        'couple_name', 'bride_name', 'groom_name',
-        'wedding_date', 'venue', 'target_budget',
-        'description', 'created_by', 'is_active',
+        'name', 'event_date', 'event_type', 'venue', 'target_budget',
+        'description', 'banner_image', 'created_by', 'is_active',
     ];
 
     protected $casts = [
-        'wedding_date'  => 'date',
+        'event_date'  => 'date',
         'target_budget' => 'decimal:2',
         'is_active'     => 'boolean',
     ];
@@ -30,6 +29,11 @@ class Event extends Model
     public function gifts()
     {
         return $this->hasMany(Gift::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
     }
 
     public function members()
@@ -69,6 +73,17 @@ class Event extends Model
 
     public function getDaysToGoAttribute()
     {
-        return now()->diffInDays($this->wedding_date, false);
+        return (int) round(now()->diffInDays($this->event_date, false));
+    }
+
+    // Backwards Compatibility for Old Views during migration phase
+    public function getCoupleNameAttribute()
+    {
+        return $this->name;
+    }
+
+    public function getWeddingDateAttribute()
+    {
+        return $this->event_date;
     }
 }

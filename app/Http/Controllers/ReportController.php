@@ -25,9 +25,19 @@ class ReportController extends Controller
                     ->groupBy('date')->orderBy('date')->get(),
 
                 'top_contributors' => Contribution::where('event_id', $event->id)
-                    ->confirmed()->selectRaw('contributor_name, contributor_phone, SUM(amount) as total')
-                    ->groupBy('contributor_name','contributor_phone')
-                    ->orderByDesc('total')->take(10)->get(),
+                    ->confirmed()
+                    ->with('contributor')
+                    ->get()
+                    ->groupBy('contributor_id')
+                    ->map(function ($contributions) {
+                        return [
+                            'name' => $contributions->first()->contributor?->first_name . ' ' . $contributions->first()->contributor?->last_name,
+                            'phone' => $contributions->first()->contributor?->phone,
+                            'total' => $contributions->sum('amount')
+                        ];
+                    })
+                    ->sortByDesc('total')
+                    ->take(10),
             ];
         }
 
@@ -37,8 +47,8 @@ class ReportController extends Controller
     public function exportPdf()
     {
         $event         = Event::active()->latest()->first();
-        $contributions = Contribution::where('event_id', $event?->id)->with('recordedBy')->get();
-        $gifts         = Gift::where('event_id', $event?->id)->get();
+        $contributions = Contribution::where('event_id', $event?->id)->with('recordedBy', 'contributor')->get();
+        $gifts         = Gift::where('event_id', $event?->id)->with('contributor')->get();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', compact('event','contributions','gifts'));
         return $pdf->download('wedding_report_' . now()->format('Y_m_d') . '.pdf');
@@ -47,7 +57,7 @@ class ReportController extends Controller
     public function exportCsv()
     {
         $event         = Event::active()->latest()->first();
-        $contributions = Contribution::where('event_id', $event?->id)->get();
+        $contributions = Contribution::where('event_id', $event?->id)->with('contributor')->get();
 
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename="contributions.csv"'];
 
@@ -56,7 +66,9 @@ class ReportController extends Controller
             fputcsv($file, ['#', 'Name', 'Phone', 'Type', 'Amount (TZS)', 'Method', 'Reference', 'Status', 'Date']);
             foreach ($contributions as $i => $c) {
                 fputcsv($file, [
-                    $i + 1, $c->display_name, $c->contributor_phone,
+                    $i + 1, 
+                    $c->contributor?->first_name . ' ' . $c->contributor?->last_name, 
+                    $c->contributor?->phone,
                     $c->type, $c->amount, $c->payment_method,
                     $c->payment_reference, $c->status, $c->created_at->format('Y-m-d'),
                 ]);

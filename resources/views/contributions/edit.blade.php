@@ -1,132 +1,142 @@
 @extends('layouts.app')
-@section('title', 'Edit Contribution')
-@section('heading', 'Edit Contribution')
-@section('subheading', 'Update record for ' . $contribution->contributor_name)
+@section('title', 'Edit Payment')
 
-@section('topbar_actions')
-  <a href="{{ route('contributions.show', $contribution) }}" class="btn btn-outline">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to Details
-  </a>
+@section('extra_css')
+<style>
+.page-header { margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+.btn-back { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s; }
+.btn-back:hover { background: var(--bg-card-hover); color: #fff; }
+.ph-title { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+
+.form-wrapper { max-width: 800px; }
+.form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+.fc-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.fc-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.fg-full { grid-column: span 2; }
+
+label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.form-input, .form-select {
+  background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 13px; font-family: 'Inter', sans-serif; transition: all 0.2s; outline: none; width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+.form-input::placeholder { color: var(--text-faint); }
+
+.payment-methods { display: flex; gap: 12px; }
+.pm-option { flex: 1; position: relative; }
+.pm-option input { position: absolute; opacity: 0; cursor: pointer; }
+.pm-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.pm-icon { font-size: 24px; color: var(--text-muted); margin-bottom: 8px; transition: all 0.2s; }
+.pm-label { font-size: 12px; font-weight: 600; color: var(--text-muted); transition: all 0.2s; }
+.pm-option input:checked + .pm-card { border-color: #10B981; background: rgba(16, 185, 129, 0.05); }
+.pm-option input:checked + .pm-card .pm-icon, .pm-option input:checked + .pm-card .pm-label { color: #10B981; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+.btn-cancel { padding: 12px 24px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+.btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.btn-submit { padding: 12px 32px; border-radius: 8px; background: linear-gradient(90deg, #10B981, #059669); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25); transition: transform 0.2s; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+.error-msg { font-size: 11px; color: #EF4444; margin-top: 4px; }
+</style>
 @endsection
 
 @section('content')
-<div style="display:grid;grid-template-columns:1fr 300px;gap:24px;">
-  <div>
-    <form method="POST" action="{{ route('contributions.update', $contribution) }}">
-      @csrf
-      @method('PUT')
-      <input type="hidden" name="event_id" value="{{ $contribution->event_id }}"/>
-      <input type="hidden" name="type" value="{{ $contribution->type }}"/>
 
-      <div class="form-card">
-        <div class="form-card-header">
-          <div class="form-card-title">{{ ucfirst($contribution->type) }} Contribution Details</div>
-          <div class="form-card-sub">Modify the entry information below</div>
+<div class="page-header">
+  <a href="{{ route('contributions.index') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i></a>
+  <h1 class="ph-title">Edit Transaction #TXN-{{ str_pad($contribution->id, 6, '0', STR_PAD_LEFT) }}</h1>
+</div>
+
+<div class="form-wrapper">
+  <form method="POST" action="{{ route('contributions.update', $contribution) }}">
+    @csrf
+    @method('PUT')
+    
+    <div class="form-card">
+      <div class="fc-title">Transaction Details</div>
+      <div class="fc-sub">Update the specifics of this transaction.</div>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Contributor Name</label>
+          <input type="text" name="contributor_name" class="form-input" value="{{ old('contributor_name', $contribution->contributor_name) }}" required>
+          @error('contributor_name')<span class="error-msg">{{ $message }}</span>@enderror
         </div>
-        <div class="form-body">
-          <div class="form-grid">
 
-            @if($contribution->type === 'cash')
-            <div class="field span2">
-              <label>Amount (TZS)</label>
-              <input type="number" name="amount" value="{{ old('amount', $contribution->amount) }}" placeholder="0" style="font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:600;padding:12px 16px;" required/>
-              @error('amount')<span class="error-msg">{{ $message }}</span>@enderror
-            </div>
-            @endif
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" name="contributor_phone" class="form-input" value="{{ old('contributor_phone', $contribution->contributor_phone) }}" required>
+          @error('contributor_phone')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
 
-            <div class="field">
-              <label>{{ $contribution->type === 'gift' ? 'Gift Item Name' : 'Contributor Name' }}</label>
-              <input type="text" name="contributor_name" value="{{ old('contributor_name', $contribution->contributor_name) }}" placeholder="Full name" required/>
-              @error('contributor_name')<span class="error-msg">{{ $message }}</span>@enderror
-            </div>
+        <div class="form-group fg-full">
+          <label>Amount</label>
+          <div style="position:relative;">
+            <i class="fa-solid fa-dollar-sign" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-faint);"></i>
+            <input type="number" step="0.01" name="amount" class="form-input" style="padding-left:36px; font-size:16px; font-weight:600;" value="{{ old('amount', $contribution->amount) }}" required>
+          </div>
+          @error('amount')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
 
-            <div class="field">
-              <label>{{ $contribution->type === 'gift' ? 'Donor Name' : 'Phone Number' }}</label>
-              <input type="text" name="contributor_phone" value="{{ old('contributor_phone', $contribution->contributor_phone) }}" placeholder="+255 7XX XXX XXX" required/>
-              @error('contributor_phone')<span class="error-msg">{{ $message }}</span>@enderror
-            </div>
-
-            @if($contribution->type === 'cash')
-            <div class="field">
-              <label>Payment Method</label>
-              <select name="payment_method">
-                @foreach(['mpesa'=>'M-Pesa', 'airtel_money'=>'Airtel Money', 'cash'=>'Cash (Hand)', 'bank_transfer'=>'Bank Transfer', 'tigopesa'=>'Tigo Pesa', 'other'=>'Other'] as $val => $lbl)
-                  <option value="{{ $val }}" {{ old('payment_method', $contribution->payment_method) === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-                @endforeach
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Payment Reference / Transaction ID</label>
-              <input type="text" name="payment_reference" value="{{ old('payment_reference', $contribution->payment_reference) }}" placeholder="e.g. MP2026XXXX"/>
-            </div>
-            @endif
-
-            <div class="field span2">
-              <label>Status</label>
-              <div style="display:flex;gap:10px;">
-                @php
-                  $statuses = $contribution->type === 'cash' 
-                    ? ['pending'=>'⏳ Pending','confirmed'=>'✓ Confirmed','rejected'=>'✕ Rejected']
-                    : ['pending'=>'⏳ Pledged','confirmed'=>'✓ Received','rejected'=>'✕ Cancelled'];
-                @endphp
-                @foreach($statuses as $val => $label)
-                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;transition:all 0.15s; {{ old('status', $contribution->status) === $val ? 'border-color:var(--rose); background:var(--rose-pale); color:var(--rose);' : '' }}">
-                  <input type="radio" name="status" value="{{ $val }}" {{ old('status', $contribution->status) === $val ? 'checked' : '' }} style="accent-color:var(--rose);"/>
-                  {{ $label }}
-                </label>
-                @endforeach
+        <div class="form-group fg-full">
+          <label style="margin-bottom: 8px;">Payment Method</label>
+          <div class="payment-methods">
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="mpesa" {{ old('payment_method', strtolower($contribution->payment_method)) == 'mpesa' ? 'checked' : '' }} required>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div class="pm-label">M-Pesa</div>
               </div>
-            </div>
+            </label>
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="cash" {{ old('payment_method', strtolower($contribution->payment_method)) == 'cash' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-solid fa-money-bill"></i></div>
+                <div class="pm-label">Cash</div>
+              </div>
+            </label>
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="bank_transfer" {{ old('payment_method', strtolower($contribution->payment_method)) == 'bank_transfer' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="pm-label">Bank Tx</div>
+              </div>
+            </label>
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="other" {{ old('payment_method', strtolower($contribution->payment_method)) == 'other' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-regular fa-credit-card"></i></div>
+                <div class="pm-label">Other</div>
+              </div>
+            </label>
+          </div>
+          @error('payment_method')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
 
-            <div class="field span2">
-              <label>Notes / Description</label>
-              <textarea name="notes" placeholder="Any additional notes...">{{ old('notes', $contribution->notes) }}</textarea>
-            </div>
+        <div class="form-group">
+          <label>Payment Reference (Optional)</label>
+          <input type="text" name="payment_reference" class="form-input" value="{{ old('payment_reference', $contribution->payment_reference) }}">
+        </div>
 
-          </div>
-        </div>
-        <div class="form-actions">
-          <a href="{{ route('contributions.show', $contribution) }}" class="btn btn-outline">Cancel</a>
-          <button type="submit" class="btn btn-primary">Update Contribution</button>
-        </div>
-      </div>
-    </form>
-  </div>
-
-  {{-- Context Sidebar --}}
-  <div>
-    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:18px;">Audit Trail</div>
-      <div style="display:flex;flex-direction:column;gap:16px;">
-        <div style="display:flex;gap:10px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:4px;"></div>
-          <div>
-            <div style="font-size:12px;font-weight:600;">Created</div>
-            <div style="font-size:11px;color:var(--ink-faint);">{{ $contribution->created_at->format('M d, Y H:i') }}</div>
-            <div style="font-size:11px;color:var(--ink-muted);">by {{ $contribution->recordedBy?->full_name }}</div>
-          </div>
-        </div>
-        @if($contribution->confirmed_at)
-        <div style="display:flex;gap:10px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:4px;"></div>
-          <div>
-            <div style="font-size:12px;font-weight:600;">Confirmed</div>
-            <div style="font-size:11px;color:var(--ink-faint);">{{ $contribution->confirmed_at->format('M d, Y H:i') }}</div>
-            <div style="font-size:11px;color:var(--ink-muted);">by {{ $contribution->confirmedBy?->full_name }}</div>
-          </div>
-        </div>
-        @endif
-        <div style="display:flex;gap:10px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--rose);margin-top:4px;"></div>
-          <div>
-            <div style="font-size:12px;font-weight:600;">Last Updated</div>
-            <div style="font-size:11px;color:var(--ink-faint);">{{ $contribution->updated_at->format('M d, Y H:i') }}</div>
-          </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" class="form-select" required>
+            <option value="pending" {{ old('status', $contribution->status) == 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="confirmed" {{ old('status', $contribution->status) == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+            <option value="rejected" {{ old('status', $contribution->status) == 'rejected' ? 'selected' : '' }}>Rejected</option>
+          </select>
+          @error('status')<span class="error-msg">{{ $message }}</span>@enderror
         </div>
       </div>
     </div>
-  </div>
+
+    <div class="form-actions">
+      <a href="{{ route('contributions.index') }}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Save Changes</button>
+    </div>
+  </form>
 </div>
+
 @endsection

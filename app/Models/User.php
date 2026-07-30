@@ -25,10 +25,17 @@ class User extends Authenticatable
     public function isAdmin()     { return $this->role === 'admin'; }
     public function isCommittee() { return $this->role === 'committee'; }
     public function isCouple()    { return $this->role === 'couple'; }
+    public function isVendor()    { return $this->role === 'vendor'; }
 
     public function canManage()
     {
         return in_array($this->role, ['admin', 'committee']);
+    }
+
+    // Relationships
+    public function vendorProfile()
+    {
+        return $this->hasOne(Vendor::class, 'user_id');
     }
 
     // Relationships

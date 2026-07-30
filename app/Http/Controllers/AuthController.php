@@ -50,7 +50,6 @@ class AuthController extends Controller
             'phone'      => ['required', 'string', 'max:20', 'unique:users'],
             'email'      => ['nullable', 'email', 'unique:users'],
             'password'   => ['required', 'confirmed', 'min:6'],
-            'role'       => ['required', 'in:contributor,committee,couple,admin'],
         ]);
 
         $user = User::create([
@@ -58,7 +57,7 @@ class AuthController extends Controller
             'phone'     => $validated['phone'],
             'email'     => $validated['email'] ?? null,
             'password'  => Hash::make($validated['password']),
-            'role'      => $validated['role'],
+            'role'      => 'contributor', // Only contributors self-register; vendors are invited
         ]);
 
         Auth::login($user);

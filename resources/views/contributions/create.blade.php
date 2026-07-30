@@ -1,204 +1,173 @@
 @extends('layouts.app')
-@section('title','Add Contribution')
-@section('heading','Add Contribution')
-@section('subheading','Record a new cash or gift contribution')
+@section('title', 'Record Payment')
 
-@section('topbar_actions')
-  <a href="{{ route('contributions.index') }}" class="btn btn-outline">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Back
-  </a>
+@section('extra_css')
+<style>
+.page-header { margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+.btn-back { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s; }
+.btn-back:hover { background: var(--bg-card-hover); color: #fff; }
+.ph-title { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+
+.form-wrapper { max-width: 800px; }
+.form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+.fc-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.fc-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.fg-full { grid-column: span 2; }
+
+label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.form-input, .form-select {
+  background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 13px; font-family: 'Inter', sans-serif; transition: all 0.2s; outline: none; width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+.form-input::placeholder { color: var(--text-faint); }
+
+.payment-methods { display: flex; gap: 12px; }
+.pm-option { flex: 1; position: relative; }
+.pm-option input { position: absolute; opacity: 0; cursor: pointer; }
+.pm-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.pm-icon { font-size: 24px; color: var(--text-muted); margin-bottom: 8px; transition: all 0.2s; }
+.pm-label { font-size: 12px; font-weight: 600; color: var(--text-muted); transition: all 0.2s; }
+.pm-option input:checked + .pm-card { border-color: #10B981; background: rgba(16, 185, 129, 0.05); }
+.pm-option input:checked + .pm-card .pm-icon, .pm-option input:checked + .pm-card .pm-label { color: #10B981; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+.btn-cancel { padding: 12px 24px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+.btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.btn-submit { padding: 12px 32px; border-radius: 8px; background: linear-gradient(90deg, #10B981, #059669); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25); transition: transform 0.2s; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+.error-msg { font-size: 11px; color: #EF4444; margin-top: 4px; }
+
+/* ─── Mobile Responsive ─── */
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
+  .ph-title { font-size: 20px; }
+  .form-grid { grid-template-columns: 1fr; gap: 16px; }
+  .fg-full { grid-column: span 1; }
+  .payment-methods { flex-wrap: wrap; }
+  .pm-option { min-width: calc(50% - 6px); }
+  .form-card { padding: 20px; }
+}
+</style>
 @endsection
 
 @section('content')
-<div style="display:grid;grid-template-columns:1fr 300px;gap:24px;">
-  <div>
-    {{-- Type Toggle --}}
-    <div style="display:flex;background:#fff;border:1px solid var(--border);border-radius:14px;padding:6px;gap:6px;margin-bottom:24px;">
-      <button type="button" id="btn-cash" onclick="switchType('cash')" style="flex:1;padding:13px;border-radius:10px;border:none;background:var(--rose);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 12px rgba(139,42,74,.25);">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Cash Contribution
-      </button>
-      <button type="button" id="btn-gift" onclick="switchType('gift')" style="flex:1;padding:13px;border-radius:10px;border:none;background:transparent;color:var(--ink-faint);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-        Gift Contribution
-      </button>
-    </div>
 
-    {{-- CASH FORM --}}
-    <div id="panel-cash">
-      <form method="POST" action="{{ route('contributions.store') }}">
-        @csrf
-        <input type="hidden" name="type" value="cash"/>
-        <input type="hidden" name="event_id" value="{{ $event?->id }}"/>
-
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title">Cash Contribution</div>
-            <div class="form-card-sub">Record money received from a contributor</div>
-          </div>
-          <div class="form-body">
-            <div class="form-grid">
-
-              <div class="field span2">
-                <label>Amount (TZS)</label>
-                <input type="number" name="amount" value="{{ old('amount') }}" placeholder="0" style="font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:600;padding:12px 16px;" required/>
-                @error('amount')<span class="error-msg">{{ $message }}</span>@enderror
-              </div>
-
-              <div class="field">
-                <label>Contributor Name</label>
-                <input type="text" name="contributor_name" value="{{ old('contributor_name') }}" placeholder="Full name" required/>
-                @error('contributor_name')<span class="error-msg">{{ $message }}</span>@enderror
-              </div>
-
-              <div class="field">
-                <label>Phone Number</label>
-                <input type="tel" name="contributor_phone" value="{{ old('contributor_phone') }}" placeholder="+255 7XX XXX XXX" required/>
-              </div>
-
-              <div class="field">
-                <label>Payment Method</label>
-                <select name="payment_method">
-                  <option value="mpesa">M-Pesa</option>
-                  <option value="airtel_money">Airtel Money</option>
-                  <option value="cash">Cash (Hand)</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="tigopesa">Tigo Pesa</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label>Payment Reference / Transaction ID</label>
-                <input type="text" name="payment_reference" value="{{ old('payment_reference') }}" placeholder="e.g. MP2026XXXX"/>
-                <span style="font-size:11.5px;color:var(--ink-faint);">Leave blank if paid by hand</span>
-              </div>
-
-              <div class="field span2">
-                <label>Status</label>
-                <div style="display:flex;gap:10px;">
-                  @foreach(['pending'=>'⏳ Pending','confirmed'=>'✓ Confirmed','rejected'=>'✕ Rejected'] as $val => $label)
-                  <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;transition:all 0.15s;" id="status-{{ $val }}">
-                    <input type="radio" name="status" value="{{ $val }}" {{ old('status','pending') === $val ? 'checked' : '' }} style="accent-color:var(--rose);" onchange="highlightStatus()"/>
-                    {{ $label }}
-                  </label>
-                  @endforeach
-                </div>
-              </div>
-
-              <div class="field span2">
-                <label>Notes (optional)</label>
-                <textarea name="notes" placeholder="Any additional notes...">{{ old('notes') }}</textarea>
-              </div>
-
-            </div>
-          </div>
-          <div class="form-actions">
-            <a href="{{ route('contributions.index') }}" class="btn btn-outline">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Contribution</button>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    {{-- GIFT FORM --}}
-    <div id="panel-gift" style="display:none;">
-      <form method="POST" action="{{ route('contributions.store') }}">
-        @csrf
-        <input type="hidden" name="type" value="gift"/>
-        <input type="hidden" name="event_id" value="{{ $event?->id }}"/>
-
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title">Gift Contribution</div>
-            <div class="form-card-sub">Register a physical gift item</div>
-          </div>
-          <div class="form-body">
-            <div class="form-grid">
-
-              <div class="field span2">
-                <label>Gift Item Name</label>
-                <input type="text" name="contributor_name" placeholder="e.g. Dining Set (12 pieces), Samsung TV 43-inch..." required/>
-              </div>
-
-              <div class="field">
-                <label>Donor Name</label>
-                <input type="text" name="contributor_phone" placeholder="Full name" required/>
-              </div>
-
-              <div class="field">
-                <label>Donor Phone</label>
-                <input type="tel" placeholder="+255 7XX XXX XXX"/>
-              </div>
-
-              <div class="field span2">
-                <label>Status</label>
-                <div style="display:flex;gap:10px;">
-                  @foreach(['pending'=>'⏳ Pledged','confirmed'=>'✓ Received','rejected'=>'✕ Cancelled'] as $val => $label)
-                  <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;">
-                    <input type="radio" name="status" value="{{ $val }}" {{ $val === 'pending' ? 'checked' : '' }} style="accent-color:var(--rose);"/>
-                    {{ $label }}
-                  </label>
-                  @endforeach
-                </div>
-              </div>
-
-              <div class="field span2">
-                <label>Description</label>
-                <textarea name="notes" placeholder="Describe the gift item..."></textarea>
-              </div>
-
-            </div>
-          </div>
-          <div class="form-actions">
-            <a href="{{ route('contributions.index') }}" class="btn btn-outline">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Gift</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  {{-- Summary Sidebar --}}
-  <div>
-    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:18px;">Event Summary</div>
-      @if($event)
-      @foreach([
-        ['Event', $event->couple_name],
-        ['Wedding Date', $event->wedding_date->format('M d, Y')],
-        ['Target Budget', 'TZS ' . number_format($event->target_budget)],
-        ['Collected So Far', 'TZS ' . number_format($event->total_confirmed)],
-        ['Remaining', 'TZS ' . number_format($event->target_budget - $event->total_confirmed)],
-        ['Progress', $event->progress_percent . '%'],
-      ] as [$label, $value])
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
-        <span style="color:var(--ink-faint);">{{ $label }}</span>
-        <span style="font-weight:600;color:var(--ink);">{{ $value }}</span>
-      </div>
-      @endforeach
-      @endif
-    </div>
-  </div>
+<div class="page-header">
+  <a href="{{ route('contributions.index') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i></a>
+  <h1 class="ph-title">Record New Payment</h1>
 </div>
 
-@endsection
+<div class="form-wrapper">
+  <form method="POST" action="{{ route('contributions.store') }}">
+    @csrf
+    
+    <div class="form-card">
+      <div class="fc-title">Transaction Details</div>
+      <div class="fc-sub">Log a payment against a specific event.</div>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Event</label>
+          <select name="event_id" class="form-select" required>
+            <option value="" disabled {{ old('event_id') ? '' : 'selected' }}>Select Event</option>
+            @foreach(\App\Models\Event::all() as $e)
+              <option value="{{ $e->id }}" {{ old('event_id', $event?->id) == $e->id ? 'selected' : '' }}>
+                {{ $e->name }}
+              </option>
+            @endforeach
+          </select>
+          @error('event_id')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
 
-@section('scripts')
-<script>
-function switchType(type) {
-  const isCash = type === 'cash';
-  document.getElementById('panel-cash').style.display = isCash ? 'block' : 'none';
-  document.getElementById('panel-gift').style.display = isCash ? 'none' : 'block';
-  const cashBtn = document.getElementById('btn-cash');
-  const giftBtn = document.getElementById('btn-gift');
-  cashBtn.style.background = isCash ? 'var(--rose)' : 'transparent';
-  cashBtn.style.color = isCash ? '#fff' : 'var(--ink-faint)';
-  cashBtn.style.boxShadow = isCash ? '0 4px 12px rgba(139,42,74,.25)' : 'none';
-  giftBtn.style.background = !isCash ? 'var(--gold)' : 'transparent';
-  giftBtn.style.color = !isCash ? '#fff' : 'var(--ink-faint)';
-  giftBtn.style.boxShadow = !isCash ? '0 4px 12px rgba(184,147,42,.25)' : 'none';
-}
-</script>
+        <div class="form-group">
+          <label>Type</label>
+          <select name="type" class="form-select" required>
+            <option value="cash" {{ old('type') == 'cash' ? 'selected' : '' }}>Cash Contribution</option>
+            <option value="gift" {{ old('type') == 'gift' ? 'selected' : '' }}>Gift</option>
+          </select>
+          @error('type')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
+          <label>Contributor Name</label>
+          <input type="text" name="contributor_name" class="form-input" placeholder="e.g. John Doe" value="{{ old('contributor_name') }}" required>
+          @error('contributor_name')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" name="contributor_phone" class="form-input" placeholder="+255 7XX XXX XXX" value="{{ old('contributor_phone') }}" required>
+          @error('contributor_phone')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group fg-full">
+          <label>Amount</label>
+          <div style="position:relative;">
+            <i class="fa-solid fa-dollar-sign" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-faint);"></i>
+            <input type="number" step="0.01" name="amount" class="form-input" style="padding-left:36px; font-size:16px; font-weight:600;" placeholder="0.00" value="{{ old('amount') }}">
+          </div>
+          @error('amount')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group fg-full">
+          <label style="margin-bottom: 8px;">Payment Method</label>
+          <div class="payment-methods">
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="mpesa" {{ old('payment_method', 'mpesa') == 'mpesa' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div class="pm-label">M-Pesa</div>
+              </div>
+            </label>
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="cash" {{ old('payment_method') == 'cash' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-solid fa-money-bill"></i></div>
+                <div class="pm-label">Cash</div>
+              </div>
+            </label>
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="pm-label">Bank Tx</div>
+              </div>
+            </label>
+            <label class="pm-option">
+              <input type="radio" name="payment_method" value="other" {{ old('payment_method') == 'other' ? 'checked' : '' }}>
+              <div class="pm-card">
+                <div class="pm-icon"><i class="fa-regular fa-credit-card"></i></div>
+                <div class="pm-label">Other</div>
+              </div>
+            </label>
+          </div>
+          @error('payment_method')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="form-group">
+          <label>Payment Reference (Optional)</label>
+          <input type="text" name="payment_reference" class="form-input" placeholder="e.g. M-Pesa code" value="{{ old('payment_reference') }}">
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" class="form-select" required>
+            <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="confirmed" {{ old('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+          </select>
+          @error('status')<span class="error-msg">{{ $message }}</span>@enderror
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ route('contributions.index') }}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Process Payment</button>
+    </div>
+  </form>
+</div>
+
 @endsection

@@ -8,9 +8,15 @@ use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::withCount(['contributions','gifts'])->latest()->paginate(10);
+        $events = Event::withCount(['contributions','gifts'])
+            ->when($request->search, function($q, $search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('venue', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10);
         return view('events.index', compact('events'));
     }
 
@@ -31,7 +37,14 @@ class EventController extends Controller
             'description'   => ['nullable', 'string'],
         ]);
 
-        Event::create([...$validated, 'created_by' => Auth::id()]);
+        Event::create([
+            'name' => $validated['couple_name'],
+            'event_date' => $validated['wedding_date'],
+            'venue' => $validated['venue'] ?? null,
+            'target_budget' => $validated['target_budget'] ?? 0,
+            'description' => $validated['description'] ?? null,
+            'created_by' => Auth::id()
+        ]);
 
         return redirect()->route('events.index')->with('success', 'Event created!');
     }
@@ -57,7 +70,12 @@ class EventController extends Controller
             'target_budget' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $event->update($validated);
+        $event->update([
+            'name' => $validated['couple_name'],
+            'event_date' => $validated['wedding_date'],
+            'venue' => $validated['venue'] ?? null,
+            'target_budget' => $validated['target_budget'] ?? 0,
+        ]);
         return redirect()->route('events.index')->with('success', 'Event updated!');
     }
 

@@ -1,80 +1,117 @@
 @extends('layouts.app')
-@section('title','Gift Registry')
-@section('heading','Gift Registry')
-@section('subheading','All physical gifts for ' . ($event?->couple_name ?? 'current event'))
+@section('title', 'Gifts Registry')
 
-@section('topbar_actions')
-  <a href="{{ route('gifts.create') }}" class="btn btn-primary">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Add Gift
-  </a>
+@section('extra_css')
+<style>
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.ph-title { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; margin-bottom: 6px; }
+.ph-sub { color: var(--text-muted); font-size: 14px; }
+
+.btn-primary { background: linear-gradient(90deg, #F43F5E, #E11D48); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25); transition: transform 0.2s; width: fit-content; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244, 63, 94, 0.35); }
+
+.data-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; overflow-x: auto; }
+
+@media(max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .page-header .btn-primary {
+    align-self: flex-start;
+  }
+}
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); padding-bottom: 16px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+.data-table td { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 13px; color: var(--text-main); }
+.data-table tr:last-child td { border-bottom: none; }
+
+.status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+.status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+.pill-received { background: rgba(16, 185, 129, 0.15); color: var(--status-green); border: 1px solid rgba(16, 185, 129, 0.2); }
+.pill-received::before { background: var(--status-green); }
+.pill-pledged { background: rgba(139, 92, 246, 0.15); color: var(--brand-purple); border: 1px solid rgba(139, 92, 246, 0.2); }
+.pill-pledged::before { background: var(--brand-purple); }
+
+.action-btns { display: flex; gap: 8px; }
+.btn-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: all 0.2s; text-decoration: none;}
+.btn-icon:hover { background: var(--bg-card-hover); color: #fff; }
+
+.pagination-wrap { margin-top: 24px; display: flex; justify-content: center; }
+</style>
 @endsection
 
 @section('content')
-<div class="table-card">
-  <div class="table-header">
-    <div>
-      <div class="table-title">All Gifts</div>
-      <div style="font-size:12px;color:var(--ink-faint);margin-top:2px;">{{ $gifts->total() }} total gifts</div>
-    </div>
+
+<div class="page-header">
+  <div>
+    <h1 class="ph-title">Gifts Registry</h1>
+    <p class="ph-sub">Manage physical gifts and pledges for your events.</p>
   </div>
-  <table>
+  <a href="{{ route('gifts.create') }}" class="btn-primary">
+    <i class="fa-solid fa-gift"></i> Record Gift
+  </a>
+</div>
+
+<div class="data-card">
+  <table class="data-table">
     <thead>
       <tr>
-        <th>#</th>
-        <th>Item</th>
-        <th>Category</th>
-        <th>Donor</th>
-        <th>Est. Value (TZS)</th>
         <th>Date</th>
+        <th>Gifter / Donor</th>
+        <th>Event</th>
+        <th>Item Name</th>
+        <th>Category</th>
+        <th>Estimated Value</th>
         <th>Status</th>
-        <th>Actions</th>
+        <th style="text-align:right;">Actions</th>
       </tr>
     </thead>
     <tbody>
-      @forelse($gifts as $gift)
+      @forelse($gifts as $g)
       <tr>
-        <td style="color:var(--ink-faint);font-size:12px;">{{ $gifts->firstItem() + $loop->index }}</td>
+        <td style="color:var(--text-muted);">{{ $g->created_at->format('M d, Y') }}</td>
         <td>
-          <div style="font-weight:500;color:var(--ink);">{{ $gift->item_name }}</div>
-          <div style="font-size:11.5px;color:var(--ink-faint);">{{ ucwords(str_replace('_',' ',$gift->category)) }}</div>
+          <div style="font-weight:600; color:#fff;">{{ $g->display_donor }}</div>
+          <div style="font-size:11px; color:var(--text-muted);">{{ $g->donor_phone ?? '' }}</div>
         </td>
-        <td style="font-size:12.5px;">{{ ucwords(str_replace('_',' ',$gift->category)) }}</td>
+        <td>{{ $g->event?->name ?? 'General' }}</td>
+        <td style="font-weight:500; color:#fff;">{{ $g->item_name }}</td>
+        <td>{{ ucfirst(str_replace('_', ' ', $g->category)) }}</td>
+        <td style="font-weight:600; color:#fff;">${{ number_format($g->estimated_value, 2) }}</td>
         <td>
-          <div class="donor-cell">
-            <div class="d-avatar" style="background:var(--gold);">{{ strtoupper(substr($gift->donor_name ?? 'U', 0, 2)) }}</div>
-            <div>
-              <div class="d-name">{{ $gift->donor_name }}</div>
-              <div class="d-phone">{{ $gift->donor_phone }}</div>
-            </div>
-          </div>
+          <span class="status-pill {{ $g->status == 'received' ? 'pill-received' : 'pill-pledged' }}">
+            {{ ucfirst($g->status) }}
+          </span>
         </td>
-        <td><span class="amount-cell">{{ $gift->estimated_value > 0 ? number_format($gift->estimated_value) : '—' }}</span></td>
-        <td style="font-size:12px;color:var(--ink-faint);">{{ $gift->created_at->format('M d, Y') }}</td>
-        <td><span class="badge badge-{{ $gift->status }}">{{ ucfirst($gift->status) }}</span></td>
         <td>
-          <div class="action-btns">
-            @if($gift->status === 'pledged')
-            <form method="POST" action="{{ route('gifts.receive',$gift) }}" style="display:inline;">@csrf @method('PATCH')
-              <button type="submit" class="btn btn-green btn-sm" style="font-size:11px;padding:5px 9px;">✓ Received</button>
-            </form>
-            @endif
-            <a href="{{ route('gifts.edit',$gift) }}" class="btn btn-outline btn-sm" style="font-size:11px;padding:5px 9px;">Edit</a>
-            <form method="POST" action="{{ route('gifts.destroy',$gift) }}" style="display:inline;">@csrf @method('DELETE')
-              <button type="submit" class="btn btn-outline btn-sm" style="font-size:11px;padding:5px 9px;color:#C62828;border-color:#C62828;" onclick="return confirm('Delete this gift?')">Delete</button>
-            </form>
+          <div class="action-btns" style="justify-content:flex-end;">
+            <a href="{{ route('gifts.show', $g) }}" class="btn-icon" title="View"><i class="fa-solid fa-eye"></i></a>
+            <a href="{{ route('gifts.edit', $g) }}" class="btn-icon" title="Edit"><i class="fa-solid fa-pen"></i></a>
           </div>
         </td>
       </tr>
       @empty
-      <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-faint);">
-        No gifts registered. <a href="{{ route('gifts.create') }}" style="color:var(--rose);font-weight:500;">Register first gift →</a>
-      </td></tr>
+      <tr>
+        <td colspan="8" style="text-align:center; padding: 60px 20px;">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.02); display:flex; align-items:center; justify-content:center; margin: 0 auto 16px;">
+            <i class="fa-solid fa-box-open" style="font-size:24px; color:var(--text-faint);"></i>
+          </div>
+          <div style="font-size:15px; font-weight:500; color:#fff; margin-bottom:8px;">No gifts recorded</div>
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:24px;">Start tracking physical items and pledges from your guests.</div>
+          <a href="{{ route('gifts.create') }}" class="btn-primary" style="display:inline-flex;">Record Gift</a>
+        </td>
+      </tr>
       @endforelse
     </tbody>
   </table>
+  
   @if($gifts->hasPages())
   <div class="pagination-wrap">{{ $gifts->links() }}</div>
   @endif
 </div>
+
 @endsection
